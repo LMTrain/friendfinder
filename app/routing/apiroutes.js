@@ -1,31 +1,58 @@
-var friendsData = require ('../data/friends.js');
+var friends = require ('../data/friends.js');
 
 module.exports = function (app) {
 
     
     app.get('/api/friends', function (req, res) {
-        res.json(friendsData);
+        res.json(friends);
     });
 
+    
     app.post('/api/friends', function (req, res) {
+        let friendObj = req.body;
+        friendObj['scores'] = friendObj['scores[]'];
+        delete friendObj['scores[]'];
 
+        var bestMatch = {
+            name: "",
+            photo: "",
+            friendDifference: Infinity
+        };
+        var userData = friendObj;
+        var userScores = userData.scores;
 
-
+        var totalDifference;
 
         
-        if(friendsData.length < 15) {
-            friendsData.push(req.body);
-            res.json(friendsData);        
-        } else {
-            friendsData.push(req.body);
-            res.json(false);
-        }
-    });
+        if(friends.length < 20) {
+                           
+            friends.push(userData);                
 
-    app.post('/api/clear', function(){
-       
-        friendsData = [];
-      
-        console.log(friendsData);
-    })
-}
+        } else {
+            friends.push(userData);
+            res.json(false);
+        }   
+
+        for (var i = 0; i < friends.length; i++) {
+            var currentFriend = friends[i];
+            totalDifference = 0;    
+                        
+            for (var j = 0; j < currentFriend.scores.length; j++) {                
+                var currentFriendScore = currentFriend.scores[j];
+                var currentUserScore = userScores[i];
+        
+                totalDifference += Math.abs(parseInt(currentUserScore) - parseInt(currentFriendScore));
+            }
+
+            if (totalDifference <= bestMatch.friendDifference) {
+                bestMatch.name = currentFriend.name;
+                bestMatch.photo = currentFriend.photo;
+                bestMatch.friendDifference = totalDifference;
+            }
+        }
+        
+    
+        res.json(bestMatch);
+    });      
+};
+
